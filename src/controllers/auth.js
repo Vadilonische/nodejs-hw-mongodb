@@ -1,4 +1,3 @@
-import { ONE_MONTH } from '../constants/index.js';
 import {
   loginUser,
   logoutUser,
@@ -65,8 +64,8 @@ export const refreshUserSessionController = async (req, res) => {
 };
 
 export const logoutUserController = async (req, res) => {
-  if (req.cookie.sessionId) {
-    await logoutUser(req.cookie.sessionId);
+  if (req.cookies.sessionId) {
+    await logoutUser(req.cookies.sessionId);
   }
   res.clearCookie('sessionId');
   res.clearCookie('refreshToken');
