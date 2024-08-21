@@ -1,5 +1,7 @@
+import * as fs from 'node:fs/promises';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import handlebars from 'handlebars';
 import { UsersCollection } from '../db/models/user.js';
 import createHttpError from 'http-errors';
 import { SessionsCollection } from '../db/models/session.js';
@@ -7,6 +9,9 @@ import { randomBytes } from 'crypto';
 import { FIFTEEN_MINUTES, ONE_MONTH, SMTP } from '../constants/index.js';
 import { env } from '../utils/env.js';
 import { sendMail } from '../utils/sendEmail.js';
+import { TEMPLATE_DIR } from '../constants/index.js';
+import path from 'path';
+import { decode } from 'node:punycode';
 
 export const registerUser = async (payload) => {
   const user = await UsersCollection.findOne({ email: payload.email });
@@ -106,10 +111,46 @@ export const requestResetEmail = async (email) => {
     },
   );
 
+  const templateFile = path.join(TEMPLATE_DIR, 'reset-password-email.html');
+
+  const templateSource = await fs.readFile(templateFile, { encoding: 'utf-8' });
+
+  const template = handlebars.compile(templateSource);
+
+  const html = template({
+    name: user.name,
+    link: `${env('APP_DOMAIN')}/reset-password?token=${resetToken}`,
+  });
+
   await sendMail({
     from: env(SMTP.SMTP_FROM),
     to: email,
     subject: 'Reset your password',
-    html: `<p>Click <a href="${resetToken}">here</a> to reset your password!</p>`,
+    html,
   });
+};
+
+export const resetPassword = async (payload) => {
+  let entries;
+  try {
+    entries = jwt.verify(payload.token, process.env.JWT_SECRET);
+  } catch (error) {
+    if (error instanceof Error) throw createHttpError(401, error.message);
+    throw error;
+  }
+  console.log(entries);
+
+  const user = await UsersCollection.findOne({
+    _id: entries.sub,
+    email: entries.email,
+  });
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+  const hashedPassword = await bcrypt.hash(payload.password, 10);
+
+  await UsersCollection.findByIdAndUpdate(
+    { _id: user._id },
+    { password: hashedPassword },
+  );
 };
