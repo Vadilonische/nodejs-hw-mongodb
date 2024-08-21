@@ -6,12 +6,15 @@ import { UsersCollection } from '../db/models/user.js';
 import createHttpError from 'http-errors';
 import { SessionsCollection } from '../db/models/session.js';
 import { randomBytes } from 'crypto';
-import { FIFTEEN_MINUTES, ONE_MONTH, SMTP } from '../constants/index.js';
+import {
+  FIFTEEN_MINUTES,
+  ONE_MONTH,
+  SMTP,
+  TEMPLATE_DIR,
+} from '../constants/index.js';
 import { env } from '../utils/env.js';
 import { sendMail } from '../utils/sendEmail.js';
-import { TEMPLATE_DIR } from '../constants/index.js';
 import path from 'path';
-import { decode } from 'node:punycode';
 
 export const registerUser = async (payload) => {
   const user = await UsersCollection.findOne({ email: payload.email });
@@ -132,13 +135,14 @@ export const requestResetEmail = async (email) => {
 
 export const resetPassword = async (payload) => {
   let entries;
+
   try {
     entries = jwt.verify(payload.token, process.env.JWT_SECRET);
   } catch (error) {
     if (error instanceof Error) throw createHttpError(401, error.message);
     throw error;
   }
-  console.log(entries);
+  
 
   const user = await UsersCollection.findOne({
     _id: entries.sub,
