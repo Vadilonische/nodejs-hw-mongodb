@@ -1,0 +1,54 @@
+tags:
+  - Auth
+summary: Create user
+operationId: postRegister
+description: 'Create user'
+security:
+  - bearerAuth: []
+requestBody:
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - name
+          - email
+          - password
+        properties:
+          name:
+            description: 'User name'
+            type: string
+            example: 'John Doe'
+          email:
+            description: 'The user email'
+            type: string
+            example: 'contact@example.com'
+          password:
+            description: 'The password user email'
+            type: string
+            example: '+1234567890'
+responses:
+  '201':
+    description: Create user
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - status
+            - message
+            - data
+          properties:
+            status:
+              type: integer
+              example: 201
+            message:
+              type: string
+              example: 'Successfully registered a user!'
+            data:
+              type: object
+              $ref: ../../../components/schemas/user.yaml
+  '400':
+    $ref: '../../../components/responses/400.yaml'
+  '500':
+    $ref: '../../../components/responses/500.yaml'
