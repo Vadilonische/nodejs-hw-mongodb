@@ -13,7 +13,7 @@ tags:
     description: Auth operations.
 servers:
   - url: http://localhost:3000
-  # - url: http://example.com/api/v1
+  - url: https://contacts-swagger-2c8p.onrender.com
 paths:
   /contacts/{id}:
     get:
